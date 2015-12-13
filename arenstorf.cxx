@@ -37,7 +37,7 @@ void RKstep(const double* r, const double mu, const double dt, double* k1, doubl
 }
 //------------------------------------------------------------------------
 void RK4(double* r, const double mu, double dt, double* k1, double* k2, double* k3, double* k4, double* k5, double* k6, double* k7){
-	const double b14=5179.0/57300.0, b24=0, b34=7571.0/16695.0, b44=393.0/640.0, b54=-92097.0/339200.0, b64=187.0/2100.0, b74=1.0/40.0;
+	const double b14=5179.0/57600.0, b24=0, b34=7571.0/16695.0, b44=393.0/640.0, b54=-92097.0/339200.0, b64=187.0/2100.0, b74=1.0/40.0;
 	RKstep(r, mu, dt, k1, k2, k3, k4 , k5, k6, k7);
 	for(int i=0; i<4; i++) r[i]+=dt*(b14*k1[i]+b24*k2[i]+b34*k3[i]+b44*k4[i]+b54*k5[i]+b64*k6[i]+b74*k7[i]);
 	
@@ -58,9 +58,7 @@ void ssc(const double* r, const double* s, double& maxi){
 }
 //------------------------------------------------------------------------
 int main(){
-
 	ofstream out("solution");
-	ofstream outa("time");
 	const int dim = 4;
 	const double mu = 0.012277471;
 	double dt = 1e-3;
@@ -71,35 +69,20 @@ int main(){
 	double s[dim]={0.994, 0.0, 0.0, -2.00158510637908};
 	double u[dim],v[dim];
 	double maxi=0;
-	double tol=1e-5;
-
-	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << "\t" << maxi << endl;			// printing initial values
-
+	double tol=1e-10;
+	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << "\t" << maxi << "\t" << dt << endl;
 	while(t<=T){
-
 		for(int i=0; i<4; i++){u[i]=r[i];v[i]=s[i];}
-
 		RK4(r, mu, dt, k1, k2, k3, k4, k5, k6, k7);
-
 		RK5(s, mu, dt, k1, k2, k3, k4, k5, k6, k7);
-
 		ssc(r, s, maxi);
-
-		dt*=pow((tol/maxi), 0.20);
-
+		dt*=0.9*pow((tol/maxi), 0.2);
 		for(int i=0; i<4; i++){r[i]=u[i];s[i]=v[i];}
-
 		RK4(r, mu, dt, k1, k2, k3, k4, k5, k6, k7);
-
 		for(int i=0; i<4; i++)s[i]=r[i];
-
 		t+=dt;
-
-
-	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << "\t" << maxi << endl;
-	outa << t << "\t" << dt << endl;
+	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << "\t" << maxi << "\t" << dt << endl;
 	}
-	outa.close();
 	out.close();
 	return 0;
 }
