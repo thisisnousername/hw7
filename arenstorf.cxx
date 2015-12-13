@@ -13,8 +13,8 @@ using namespace std;
 void vector(double* k, const double mu, const double r1, const double r2, const double r3, const double r4){
 	k[0] = r3;
 	k[1] = r4;
-	k[2] = r1+2.0*r4-(1.0-r2)*(r1+r2)/sqrt(pow(pow(r1+mu,2.0)+pow(r2,2.0),2))-mu*(r1-1.0+mu)/sqrt(pow(pow(r1-1.0+mu,2.0)+pow(r2,2.0),3));
-	k[3] = r2+2.0*r3-(1.0-mu)*r3/sqrt(pow(pow(r1+mu,2.0)+pow(r2,2.0),3))-mu*r2/sqrt(pow(pow(r1-1.0+mu,2.0)+pow(r2,2.0),3));
+	k[2] = r1+2.0*r4-(1.0-mu)*(r1+mu)/sqrt(pow(pow(r1+mu,2.0)+pow(r2,2.0),2))-mu*(r1-1.0+mu)/sqrt(pow(pow(r1-1.0+mu,2.0)+pow(r2,2.0),3));
+	k[3] = r2-2.0*r3-(1.0-mu)*r3/sqrt(pow(pow(r1+mu,2.0)+pow(r2,2.0),3))-mu*r2/sqrt(pow(pow(r1-1.0+mu,2.0)+pow(r2,2.0),3));
 }
 //------------------------------------------------------------------------
 void RKstep(const double* r, const double mu, const double dt, double* k1, double* k2, double* k3, double* k4, double* k5, double* k6, double* k7){
@@ -60,19 +60,20 @@ void ssc(const double* r, const double* s, double& maxi){
 int main(){
 
 	ofstream out("solution");
+	ofstream outa("time");
 	const int dim = 4;
 	const double mu = 0.012277471;
 	double dt = 1e-3;
 	double T = 17.065216560157;
 	double t = 0;
 	double k1[dim],k2[dim],k3[dim],k4[dim],k5[dim],k6[dim],k7[dim];
-	double r[dim]={0.994, 0, 0, -2.00158510637908};
-	double s[dim]={0.994, 0, 0, -2.00158510637908};
+	double r[dim]={0.994, 0.0, 0.0, -2.00158510637908};
+	double s[dim]={0.994, 0.0, 0.0, -2.00158510637908};
 	double u[dim],v[dim];
-	double maxi;
-	double tol=1e-3;
+	double maxi=0;
+	double tol=1e-5;
 
-	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << endl;			// printing initial values
+	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << "\t" << maxi << endl;			// printing initial values
 
 	while(t<=T){
 
@@ -84,20 +85,21 @@ int main(){
 
 		ssc(r, s, maxi);
 
-		dt*=pow(tol/maxi, 0.2);
+		dt*=pow((tol/maxi), 0.20);
 
 		for(int i=0; i<4; i++){r[i]=u[i];s[i]=v[i];}
 
 		RK4(r, mu, dt, k1, k2, k3, k4, k5, k6, k7);
 
-		RK5(s, mu, dt, k1, k2, k3, k4, k5, k6, k7);
+		for(int i=0; i<4; i++)s[i]=r[i];
 
 		t+=dt;
 
 
-	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << endl;	
+	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << "\t" << maxi << endl;
+	outa << t << "\t" << dt << endl;
 	}
-
+	outa.close();
 	out.close();
 	return 0;
 }
