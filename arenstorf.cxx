@@ -9,10 +9,39 @@ edited by: markus
 
 using namespace std;
 
+void vector(double*,const double,const double,const double,const double,const double);
+void RKstep(const double*,const double,const double,double*,double*,double*,double*,double*,double*,double*);
+void RK45(double*,double*,const double,const double,double*,double*,double*,double*,double*,double*,double*);
+void ssc(const double*,const double*,double&);
+//------------------------------------------------------------------------
+int main(){
+	ofstream out("solution");
+	const int dim = 4;
+	const double mu = 0.012277471;
+	double dt = 1e-3;
+	const double T = 17.065216560157;
+	double t = 0.0;
+	double k1[dim],k2[dim],k3[dim],k4[dim],k5[dim],k6[dim],k7[dim];
+	double r[dim]={0.994, 0.0, 0.0, -2.00158510637908};
+	double s[dim];
+	double maxi;
+	double tol=1e-5;
+	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << "\t" << maxi << "\t" << dt << endl;
+	while(t<=T){
+		for(int i=0; i<4; i++)s[i]=r[i];
+		RK45(r, s, mu, dt, k1, k2, k3, k4, k5, k6, k7);
+		ssc(r, s, maxi);
+		dt*=pow((tol/maxi), 0.2);
+		t+=dt;
+	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << dt << endl;
+	}
+	out.close();
+	return 0;
+}
 //------------------------------------------------------------------------
 void vector(double* k, const double mu, const double r1, const double r2, const double r3, const double r4){
-	double cs=sqrt((r1+mu)*(r1+mu)+r2*r2);
-	double cr=sqrt((r1-1.0+mu)*(r1-1.0+mu)+r2*r2);
+	double cr=sqrt((r1+mu)*(r1+mu)+r2*r2);
+	double cs=sqrt((r1-1.0+mu)*(r1-1.0+mu)+r2*r2);
 	k[0] = r3;
 	k[1] = r4;
 	k[2] = r1+2.0*r4-(1.0-mu)*(r1+mu)/(cr*cr*cr)-mu*(r1-1.0+mu)/(cs*cs*cs);
@@ -36,53 +65,20 @@ void RKstep(const double* r, const double mu, const double dt, double* k1, doubl
 	vector(k7, mu, r1+dt*(a71*k1[0]+a72*k2[0]+a73*k3[0]+a74*k4[0]+a75*k5[0]+a76*k6[0]), r2+dt*(a71*k1[1]+a72*k2[1]+a73*k3[1]+a74*k4[1]+a75*k5[1]+a76*k6[1]), r3+dt*(a71*k1[2]+a72*k2[2]+a73*k3[2]+a74*k4[2]+a75*k5[2]+a76*k6[2]), r4+dt*(a71*k1[3]+a72*k2[3]+a73*k3[3]+a74*k4[3]+a75*k5[3]+a76*k6[3]));
 }
 //------------------------------------------------------------------------
-void RK4(double* r, const double mu, double dt, double* k1, double* k2, double* k3, double* k4, double* k5, double* k6, double* k7){
+void RK45(double* r, double* s, const double mu, const double dt, double* k1, double* k2, double* k3, double* k4, double* k5, double* k6, double* k7){
 	const double b14=5179.0/57600.0, b24=0.0, b34=7571.0/16695.0, b44=393.0/640.0, b54=-92097.0/339200.0, b64=187.0/2100.0, b74=1.0/40.0;
+	const double b15=35.0/384.0, b25=0.0, b35=500.0/1113.0, b45=125.0/192.0, b55=-2187.0/6784.0, b65=11.0/84.0;
 	RKstep(r, mu, dt, k1, k2, k3, k4 , k5, k6, k7);
 	for(int i=0; i<4; i++) r[i]+=dt*(b14*k1[i]+b24*k2[i]+b34*k3[i]+b44*k4[i]+b54*k5[i]+b64*k6[i]+b74*k7[i]);
-}
-//------------------------------------------------------------------------
-void RK5(double* s, const double mu, double dt, double* k1, double* k2, double* k3, double* k4, double* k5, double* k6, double* k7){
-	const double b15=35.0/384.0, b25=0.0, b35=500.0/1113.0, b45=125.0/192.0, b55=-2187.0/6784.0, b65=11.0/84.0;
-	RKstep(s, mu, dt, k1, k2, k3, k4 , k5, k6, k7);
 	for(int i=0; i<4; i++) s[i]+=dt*(b15*k1[i]+b25*k2[i]+b35*k3[i]+b45*k4[i]+b55*k5[i]+b65*k6[i]);
 }
 //------------------------------------------------------------------------
 void ssc(const double* r, const double* s, double& maxi){
-	double norm[4];
-	for(int i=0; i<4; i++) norm[i]=abs(r[i]-s[i]);
-	double max1=max(norm[0],norm[1]);
-	double max2=max(norm[2],norm[3]);
-	maxi=max(max1,max2);
-}
-//------------------------------------------------------------------------
-int main(){
-	ofstream out("solution");
-	const int dim = 4;
-	const double mu = 0.012277471;
-	double dt = 1e-3;
-	const double T = 17.065216560157;
-	double t = 0.0;
-	double k1[dim],k2[dim],k3[dim],k4[dim],k5[dim],k6[dim],k7[dim];
-	double r[dim]={0.994, 0.0, 0.0, -2.00158510637908};
-	double s[dim]={0.994, 0.0, 0.0, -2.00158510637908};
-	double u[dim],v[dim];
-	double maxi=0.0;
-	double tol=1e-5;
-	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << "\t" << maxi << "\t" << dt << endl;
-	while(t<=T){
-		for(int i=0; i<4; i++){u[i]=r[i];v[i]=s[i];}
-		RK4(r, mu, dt, k1, k2, k3, k4, k5, k6, k7);
-		RK5(s, mu, dt, k1, k2, k3, k4, k5, k6, k7);
-		ssc(r, s, maxi);
-		dt*=pow((tol/maxi), 0.2);
-		for(int i=0; i<4; i++){r[i]=u[i];s[i]=v[i];}
-		RK4(r, mu, dt, k1, k2, k3, k4, k5, k6, k7);
-		for(int i=0; i<4; i++)s[i]=r[i];
-		t+=dt;
-	out << t << "\t" << r[0] << "\t" << r[1] << "\t" << s[0] << "\t" << s[1] << "\t" << maxi << "\t" << dt << endl;
-	//out << t << "\t" << k4[0] << "\t" << k4[1] << "\t" << k4[2] << endl;
+	double norm;
+	maxi=0;
+	for(int i=0; i<4; i++){
+		norm=abs(r[i]-s[i]);
+		if(norm>maxi) maxi=norm;
 	}
-	out.close();
-	return 0;
 }
+
